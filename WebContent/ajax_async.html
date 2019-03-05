@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="EUC-KR">
+<title>Insert title here</title>
+<script src="jquery-1.12.4.js"></script>
+<script type="text/javascript">
+	function fn_ajax() {
+		$.ajax({
+			type : "get",
+			url : "myasync",
+			data : {
+				param1 : 1
+			},
+			dataType : "json",
+			async : false,
+			success : function(data) {
+			},
+	
+			error : function(xhr, status, error) {
+				console.log("에러!: " + error);
+			},
+	
+		});
+		
+	}
+</script>
+</head>
+<body>
+
+<a href="javascript:fn_ajax()">sync</a>
+</body>
+</html>

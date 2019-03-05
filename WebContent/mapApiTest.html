@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>Google Map Hello World Example</title>
+<style type="text/css">
+div#map_container{
+	width:700px;
+	height:700px;
+}
+</style>
+<script type="text/javascript" 
+   src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBSc7nxypwWGvsr15dpy4uUbXi2fNO13Uo&callback=initMap"></script> 
+
+<script type="text/javascript">
+  function loadMap() {
+    var latlng = new google.maps.LatLng(37.5116184, 126.9320721);
+    var myOptions = {
+      zoom: 11,
+      center: latlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    var map = new google.maps.Map(document.getElementById("map_container"),myOptions);
+	
+    var marker = new google.maps.Marker({
+      position: latlng, 
+      map: map, 
+      title:"my hometown, Malim Nawar!"
+    }); 
+  
+  }
+</script>
+</head>
+
+<body onload="loadMap()">
+<div id="map_container"></div>
+</body>
+
+</html>

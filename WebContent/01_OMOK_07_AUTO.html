@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="EUC-KR">
+<title>patago</title>
+<style type="text/css">
+table, tr, td {
+	border: 0px;
+	padding: 0px;
+	border-collapse: collapse;
+	margin: 0px;
+}
+
+img {
+	display: block;
+}
+</style>
+<script src="jquery-1.12.4.js"></script>
+<script type="text/javascript">
+	  var arr2D       = new Array(); // 숫자
+	  var arr2Dimg    = new Array(); // 이미지
+	  
+	  
+	  function init(){
+	  
+	     for(var i = 0; i < 10; i++){
+	        var arrRow = new Array();
+	        // 각 행 만들면서 이미지 번호(0, 1, 2) 셋팅 
+	        arrRow.push(0); arrRow.push(0);
+	        arrRow.push(0); arrRow.push(0);
+	        arrRow.push(0); arrRow.push(0);
+	        arrRow.push(0); arrRow.push(0);
+	        arrRow.push(0); arrRow.push(0);
+	        arr2D.push(arrRow);
+	     }
+	     
+	     var grids = document.getElementsByClassName("grid");
+	     for(var i = 0; i < grids.length; i+=10){
+	        var arrRowImg = new Array();
+	        // 각 열의 정보 넣기
+	        arrRowImg.push(grids[i+0]); 
+	        arrRowImg.push(grids[i+1]);
+	        arrRowImg.push(grids[i+2]);
+	        arrRowImg.push(grids[i+3]);
+	        arrRowImg.push(grids[i+4]);
+	
+	        arrRowImg.push(grids[i+5]);
+	        arrRowImg.push(grids[i+6]);
+	        arrRowImg.push(grids[i+7]);
+	        arrRowImg.push(grids[i+8]);
+	        arrRowImg.push(grids[i+9]);
+	        
+	        arr2Dimg.push(arrRowImg);
+	     }      
+	     console.log(arr2D);
+	     console.log(arrRowImg);
+	     
+	     for(var i = 0; i < arr2D.length; i++){
+	        for(var j = 0; j < arr2D[i].length; j++){
+	           arr2Dimg[i][j].alt = i + "," + j; // alt에 좌표정보 넣기
+	        }
+	     }
+	     setInterval(function ha(){
+	    	 myclick(1);
+	     }, 5);
+	     
+	  }
+	  
+	  function myDisplay(){
+	     
+	     for(var i = 0; i < arr2D.length; i++){
+	        for(var j = 0; j < arr2D[i].length; j++){
+	           arr2Dimg[i][j].src = "01/"+arr2D[i][j]+".jpg";
+	        }
+	     }
+	     
+	     
+	  }
+	  
+	  var arrHist = new Array();
+	  
+	  var status = 1;
+	  var cnt = 1;
+	  
+	function fn_keepMemory() {
+		var str = "" + arr2D;
+		
+		str = str.replace(/,/gi,"");
+		arrHist.push(str);
+	}
+	function fn_save(){
+		var historys = arrHist+"";
+		var winner = status;
+		console.log("값 : "+historys);
+		
+		
+		$.ajax({
+			type : "post",
+			url : "myomok",
+			data : {
+				historys : historys,
+				winner : winner
+			},
+			dataType : "json",
+	
+			success : function(data) {
+				console.log(data.message);
+				location.reload();
+			},
+	
+			error : function(xhr, status, error) {
+				console.log("에러!: " + error);
+			},
+	
+		});
+	}
+	  
+	function myclick(obj){
+		if(cnt>49){
+	    	 window.location.reload(true);
+	     }
+		console.log(cnt);
+	     if(status == 0){
+	        return;
+	     }
+	     var arr_ref=[-1,-1];
+	     fn_setStoneByCom(arr_ref);
+	     
+	     var i = Number(arr_ref[0]);
+	     var j = Number(arr_ref[1]);
+	
+	     if(arr2D[i][j] != 0){
+	        alert("다른 곳에 두세요.");
+	        return;
+	     }
+	     
+	     // 두는 것
+	     arr2D[i][j] = status;
+	     cnt++;
+	     fn_keepMemory();
+	     myDisplay();
+	     
+	     var cnt_top = fn_top(i, j);
+	     var cnt_down = fn_down(i, j);
+	     var cnt_left = fn_left(i, j);
+	     var cnt_right = fn_right(i, j);
+	     
+	     var cnt_topRight = fn_topRight(i, j);
+	     var cnt_downLeft = fn_downLeft(i, j);
+	     var cnt_topLeft = fn_topLeft(i, j);
+	     var cnt_downRight = fn_downRight(i, j);
+	     
+	     var arr_cnt = new Array();
+	     arr_cnt.push(cnt_top + cnt_down + 1); // 자기 자신이 놓여진 곳 도 포함 (+1) //한줄씩 계산
+	     arr_cnt.push(cnt_left + cnt_right + 1);
+	     arr_cnt.push(cnt_topLeft + cnt_downRight + 1);
+	     arr_cnt.push(cnt_downLeft + cnt_topRight + 1);
+	     
+	     for(var i = 0; i < arr_cnt.length; i++){
+	        if(arr_cnt[i] == 5){
+	           if(status == 1){
+	        	  fn_save();
+	           }
+	           return;
+	        }
+	     }
+	     
+	     // 상태바꾸기
+	     if(status == 1){
+	        status = 2;
+	     }
+		      
+	     
+	     var arr_ret = [-1,-1]; //arr_return
+	     fn_setStoneByCom(arr_ret); //컴퓨터가 놓는다
+	     console.log(arr_ret);
+	
+	     var ai_i = arr_ret[0];
+	     var ai_j = arr_ret[1];
+	     arr2D[ai_i][ai_j] = status;
+	     fn_keepMemory();
+	     myDisplay();
+	     
+	     var cnt_top = fn_top(ai_i, ai_j);
+	     var cnt_down = fn_down(ai_i, ai_j);
+	     var cnt_left = fn_left(ai_i, ai_j);
+	     var cnt_right = fn_right(ai_i, ai_j);
+	     
+	     var cnt_topRight = fn_topRight(ai_i, ai_j);
+	     var cnt_downLeft = fn_downLeft(ai_i, ai_j);
+	     var cnt_topLeft = fn_topLeft(ai_i, ai_j);
+	     var cnt_downRight = fn_downRight(ai_i, ai_j);
+	     
+	     var arr_cnt = new Array();
+	     arr_cnt.push(cnt_top + cnt_down + 1); // 자기 자신이 놓여진 곳 도 포함 (+1) //한줄씩 계산
+	     arr_cnt.push(cnt_left + cnt_right + 1);
+	     arr_cnt.push(cnt_topLeft + cnt_downRight + 1);
+	     arr_cnt.push(cnt_downLeft + cnt_topRight + 1);
+	     
+	     for(var i = 0; i < arr_cnt.length; i++){
+	        if(arr_cnt[i] == 5){
+	           if(status == 2){
+	        	  fn_save();
+	           }
+	           return;
+	        }
+	     }
+	     if(status==2){
+	   	  status=1;
+	     }
+	     
+	  }
+	     
+	     
+	
+	  
+	  // 컴퓨터가 두는 메서드
+	  
+	  function fn_setStoneByCom(arr_ref) {//reference값으로 받음
+	
+	     //공격형
+	     var arr2Dattack = new Array();
+	  
+	  	  //수비형
+	     var arr2Ddefens = new Array();
+	  	  
+	  	  var arr2Dcenter = new Array();
+	  	  var arr2Dsumall = new Array();
+	  	  var arr2Drandom = new Array();
+	
+	     for (var i = 0; i < arr2D.length; i++) {
+	        var arr_rowA = new Array();
+	        var arr_rowD = new Array();
+	        var arr_rowC = new Array();
+	        var arr_rowS = new Array();
+	        var arr_rowR = new Array();
+	        for (var j = 0; j < arr2D[i].length; j++) {
+	           arr_rowA.push(0);
+	           arr_rowD.push(0);
+	           arr_rowC.push(0);
+	           arr_rowS.push(0);
+	           arr_rowR.push(0);
+	        }
+	        arr2Dattack.push(arr_rowA);
+	        arr2Ddefens.push(arr_rowD);
+	        arr2Dcenter.push(arr_rowC);
+	        arr2Dsumall.push(arr_rowS);
+	        arr2Drandom.push(arr_rowR);
+	     }
+	     
+	     for (var i = 0; i < arr2D.length; i++) { // 중앙 가중치
+	        for (var j = 0; j < arr2D[i].length; j++) {
+	      		var red = (i*i)+(i-arr2D.length)*(i-arr2D.length);
+	      		var black = (arr2D.length)*(arr2D.length)-red;
+	      		
+	      		var red_j = (j*j)+(j-arr2D.length)*(j-arr2D.length);
+	      		var black_j = (arr2D.length)*(arr2D.length)-red_j;
+	      		
+	      		arr2Dcenter[i][j]=(black+black_j)/100000;
+	      		
+	        }
+	     }
+	     
+	     for (var i = 0; i < arr2D.length; i++) {
+	        for (var j = 0; j < arr2D[i].length; j++) {
+	      		var red = (i*i)+(i-arr2D.length)*(i-arr2D.length);
+	      		var black = (arr2D.length)*(arr2D.length)-red;
+	      		
+	      		var red_j = (j*j)+(j-arr2D.length)*(j-arr2D.length);
+	      		var black_j = (arr2D.length)*(arr2D.length)-red_j;
+	      		arr2Drandom[i][j]=parseInt(Math.random()*10000)/100000;
+	        }
+	     }
+	     
+	     for (var i = 0; i < arr2D.length; i++) {
+	        for (var j = 0; j < arr2D[i].length; j++) {
+	           var cnt_top = fn_top(i, j);
+	           var cnt_down = fn_down(i, j);
+	           
+	           var cnt_left = fn_left(i, j);
+	           var cnt_right = fn_right(i, j);
+	
+	           var cnt_topRight = fn_topRight(i, j);
+	           var cnt_downLeft = fn_downLeft(i, j);
+	           
+	           var cnt_topLeft = fn_topLeft(i, j);
+	           var cnt_downRight = fn_downRight(i, j);
+	           
+	           var arr_cnt = new Array();
+	           arr_cnt.push(cnt_top + cnt_down + 1); 
+	           arr_cnt.push(cnt_left + cnt_right + 1);
+	           arr_cnt.push(cnt_topLeft + cnt_downRight + 1);
+	           arr_cnt.push(cnt_downLeft + cnt_topRight + 1);
+	           
+	           var maxA = fn_getMaxFromArray(arr_cnt);
+	           var maxD = fn_getMaxFromArray(arr_cnt);
+	           arr2Dattack[i][j] = maxA*0.98;
+	        }
+	     }
+	     if(status == 1){
+	         status = 2;
+	      }else if(status == 2){
+	        status = 1;
+	     }
+	     console.log(status);
+	     for (var i = 0; i < arr2D.length; i++) {
+	         for (var j = 0; j < arr2D[i].length; j++) {
+	            var cnt_top = fn_top(i, j);
+	            var cnt_down = fn_down(i, j);
+	            
+	            var cnt_left = fn_left(i, j);
+	            var cnt_right = fn_right(i, j);
+	
+	            var cnt_topRight = fn_topRight(i, j);
+	            var cnt_downLeft = fn_downLeft(i, j);
+	            
+	            var cnt_topLeft = fn_topLeft(i, j);
+	            var cnt_downRight = fn_downRight(i, j);
+	            
+	            var arr_cnt = new Array();
+	            arr_cnt.push(cnt_top + cnt_down + 1); 
+	            arr_cnt.push(cnt_left + cnt_right + 1);
+	            arr_cnt.push(cnt_topLeft + cnt_downRight + 1);
+	            arr_cnt.push(cnt_downLeft + cnt_topRight + 1);
+	            
+	            var max = fn_getMaxFromArray(arr_cnt);
+	            arr2Ddefens[i][j] = max;
+	         }
+	      }
+	     if(status == 1){
+	         status = 2;
+	      }else if(status == 2){
+	        status = 1;
+	     }
+	     
+	     //흑돌놓고 빈방찾기
+	     for (var i = 0; i < arr2D.length; i++) {
+	        for (var j = 0; j < arr2D[i].length; j++) {
+	           arr2Dsumall[i][j] += arr2Dattack[i][j];
+	           arr2Dsumall[i][j] += arr2Ddefens[i][j];
+	           arr2Dsumall[i][j] += arr2Dcenter[i][j];
+	           arr2Dsumall[i][j] += arr2Drandom[i][j];
+	        }
+	     }
+	     var max_all = 0;
+	     
+	     for (var i = 0; i < arr2D.length; i++) {
+		for (var j = 0; j < arr2D[i].length; j++) {
+			if(arr2D[i][j] != 0){
+				arr2Dsumall[i][j] = -1;
+			}	
+		}
+	     }
+	     
+	     for (var i = 0; i < arr2D.length; i++) {
+		for (var j = 0; j < arr2D[i].length; j++) {
+			if(arr2Dsumall[i][j] > max_all){
+				max_all = arr2Dsumall[i][j];
+			}	
+		}
+	     }
+	     
+	     console.log("arr2Dsumall");
+	     console.log(arr2Dsumall);
+	     console.log("--------------------");
+	     console.log("arr2Dattack");
+	     console.log(arr2Dattack);
+	     console.log("--------------------");
+	     console.log("arr2Ddefens");
+	     console.log(arr2Ddefens);
+	     console.log("--------------------");
+	     console.log("arr2Dcenter");
+	     console.log(arr2Dcenter);
+	     console.log("--------------------");
+	     
+	     for (var i = 0; i < arr2D.length; i++) {
+		for (var j = 0; j < arr2D[i].length; j++) {
+			if(arr2Dsumall[i][j]==max_all){
+				arr_ref[0]=i;
+				arr_ref[1]=j;
+				return;
+			}
+		}
+	}
+	
+	
+	  }
+	  
+	  
+	function fn_getMaxFromArray(arr) {
+		var max =0;
+		for(var k = 0; k < arr.length; k++){
+	           if(max < arr[k]){
+	              max = arr[k];
+	           }
+	        }
+		return max;
+	}
+	  function fn_top(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i - 1;
+	        j = j;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) { // 맨 위에 놓여있을 때 배열을 벗어나니까 에러남
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_down(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i + 1;
+	        j = j;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_left(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i;
+	        j = j - 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_right(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i;
+	        j = j + 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_topRight(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i - 1;
+	        j = j + 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_downLeft(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i + 1;
+	        j = j - 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_topLeft(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i - 1;
+	        j = j - 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+	
+	  function fn_downRight(i, j) {
+	
+	     var ret_cnt = 0;
+	
+	     while (true) {
+	        i = i + 1;
+	        j = j + 1;
+	        try {
+	           if (arr2D[i][j] == status) {
+	              ret_cnt++;
+	           } else {
+	              return ret_cnt;
+	           }
+	        } catch (e) {
+	           return ret_cnt;
+	        }
+	     }
+	  }
+</script>
+
+</head>
+<body onload="init()">
+	<a href="javascript:myDisplay()">화면보기</a>
+	<table>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+		<tr>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+			<td><img class="grid" src="01/0.jpg" onclick="myclick(this)"></td>
+		</tr>
+
+	</table>
+</body>
+</html>
