@@ -6,7 +6,7 @@
 	<script type="text/javascript">
         var webSocket ;
 		function init() {
-			webSocket = new WebSocket('ws://192.168.206.223/GAMESOCKET/omok');
+			webSocket = new WebSocket('ws://localhost/GAMESOCKET/omok');
 		    webSocket.onerror = function(event) {
 		      onError(event)
 		    };
